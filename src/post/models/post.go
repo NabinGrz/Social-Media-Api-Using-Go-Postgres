@@ -48,3 +48,11 @@ type MediaDetail struct {
 	PostType      string    `gorm:"not null"`
 	Url           string    `gorm:"not null"`
 }
+
+type PostByUser struct {
+	ID         uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	Email      string    `gorm:"not null"`
+	ProfileUrl string
+	Username   string `gorm:"not null"`
+	FullName   string `gorm:"not null"`
+}

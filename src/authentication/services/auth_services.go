@@ -109,7 +109,7 @@ func Register(user userModel.User, db *gorm.DB) (any, error) {
 	return m, nil
 }
 
-func Login(user userModel.UserAuth, db *gorm.DB) (map[string]interface{}, error) {
+func Login(user userModel.User, db *gorm.DB) (map[string]interface{}, error) {
 	isValid := isValidEmail(user.Email)
 
 	if !isValid {
