@@ -40,5 +40,6 @@ func DBConnection() {
 	DB.AutoMigrate(&userPostModel.CommentDetail{})
 	DB.AutoMigrate(&userPostModel.Post{})
 	DB.AutoMigrate(&userPostModel.Like{})
+	DB.AutoMigrate(&userPostModel.Share{})
 
 }

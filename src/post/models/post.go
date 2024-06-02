@@ -14,12 +14,20 @@ type Post struct {
 	UserID  uuid.UUID
 	User    userModel.User `gorm:"foreignKey:UserID"`
 	// MediaDetail []MediaDetail    `gorm:"foreignKey:MediaDetailID"`
-	Likes []Like `json:"likes"`
+	Likes  []Like
+	Shares []Share
 	// Shares      []userModel.User `gorm:"foreignKey:UserID"`
 	// Comments    []CommentDetail  `gorm:"foreignKey:CommentID"`
 }
 
 type Like struct {
+	ID     uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid()" json:"id"`
+	PostID uuid.UUID      `gorm:"type:uuid" json:"post_id"`
+	Post   Post           `gorm:"foreignKey:PostID;references:ID" json:"-"`
+	UserID uuid.UUID      `gorm:"type:uuid" json:"-"`
+	User   userModel.User `gorm:"foreignKey:UserID;references:ID" json:"user"`
+}
+type Share struct {
 	ID     uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid()" json:"id"`
 	PostID uuid.UUID      `gorm:"type:uuid" json:"post_id"`
 	Post   Post           `gorm:"foreignKey:PostID;references:ID" json:"-"`

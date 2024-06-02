@@ -10,7 +10,7 @@ import (
 )
 
 func LoginHandler(ctx *gin.Context, db *gorm.DB) {
-	var user userModel.User
+	var user userModel.UserAuth
 
 	if err := ctx.ShouldBindJSON(&user); err != nil {
 		if user.Email == "" || user.Password == "" {

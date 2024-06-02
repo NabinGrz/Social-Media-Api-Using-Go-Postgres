@@ -109,24 +109,20 @@ func Register(user userModel.User, db *gorm.DB) (any, error) {
 	return m, nil
 }
 
-func Login(user userModel.User, db *gorm.DB) (map[string]interface{}, error) {
-	var foundUser userModel.User
+func Login(user userModel.UserAuth, db *gorm.DB) (map[string]interface{}, error) {
 	isValid := isValidEmail(user.Email)
 
-	if user.Email == "" || user.Password == "" {
-		return nil, errors.New("email/password field is required")
-	}
 	if !isValid {
 		return nil, errors.New("invalid email address")
 	}
-
-	if err := db.First(&foundUser, "email = ?", user.Email).Error; err != nil {
-		return nil, errors.New("user Not found")
+	dbUser := userModel.User{Email: user.Email, Password: user.Password}
+	if err := db.First(&dbUser, "email = ?", user.Email).Error; err != nil {
+		return nil, err
 	}
-	match := VerifyPassword(user.Password, foundUser.Password)
+	match := VerifyPassword(user.Password, dbUser.Password)
 
 	if match {
-		token, _ := GenerateJWT(foundUser)
+		token, _ := GenerateJWT(dbUser)
 		return map[string]interface{}{"token": token}, nil
 	}
 	return nil, errors.New("invalid Credentials")

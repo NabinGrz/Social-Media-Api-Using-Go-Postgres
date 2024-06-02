@@ -14,7 +14,7 @@ func GetAllPost(c *gin.Context, db *gorm.DB) {
 	// id := c.Param("id")
 	var posts []userPostModel.Post
 
-	if err := db.Preload("User").Preload("Likes").Preload("Likes.User").Find(&posts).Error; err != nil {
+	if err := db.Preload("User").Preload("Likes").Preload("Likes.User").Preload("Shares").Preload("Shares.User").Find(&posts).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -85,6 +85,12 @@ func dislikePost(userID, postID uuid.UUID, db *gorm.DB) error {
 }
 
 func LikePost(c *gin.Context, db *gorm.DB) {
+	likeShare(c, db, true)
+}
+func SharePost(c *gin.Context, db *gorm.DB) {
+	likeShare(c, db, false)
+}
+func likeShare(c *gin.Context, db *gorm.DB, isLiking bool) {
 	id := c.Param("id")
 	userIDString := c.GetString("userid")
 	userID, _ := uuid.Parse(userIDString)
@@ -94,27 +100,44 @@ func LikePost(c *gin.Context, db *gorm.DB) {
 		return
 	}
 
-	// Check if the user has already liked the post
-	isLiked, _ := userLikedPost(userID, post.ID, db)
-	if isLiked {
-		dislikePost(userID, post.ID, db)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Post has been disliked"})
-		return
+	if isLiking {
+		// Check if the user has already liked the post
+		isLiked, _ := userLikedPost(userID, post.ID, db)
+		if isLiked {
+			dislikePost(userID, post.ID, db)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Post has been disliked"})
+			return
+		}
 	}
 
-	// Constructing the like object
-	like := userPostModel.Like{
-		PostID: post.ID,
-		UserID: userID,
+	// Constructing the like/share object
+	if isLiking {
+		like := userPostModel.Like{
+			PostID: post.ID,
+			UserID: userID,
+		}
+		post.Likes = append(post.Likes, like)
+	} else {
+		share := userPostModel.Share{
+			PostID: post.ID,
+			UserID: userID,
+		}
+		post.Shares = append(post.Shares, share)
 	}
-	post.Likes = append(post.Likes, like)
 
 	// Save the updated post back to the database
 	if err := db.Save(&post).Error; err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Post has been liked"})
+	if isLiking {
+		c.JSON(http.StatusOK, gin.H{"message": "Post has been liked"})
+		return
+	} else {
+		c.JSON(http.StatusOK, gin.H{"message": "Post has been shared"})
+		return
+	}
+
 }
 
 // func UpdatePost(c *gin.Context) {

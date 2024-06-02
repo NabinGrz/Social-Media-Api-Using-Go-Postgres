@@ -1,10 +1,14 @@
 package userModel
 
-import (
-	"github.com/google/uuid"
-)
+import "github.com/google/uuid"
 
-// User represents a user.
+type UserAuth struct {
+	Email      string
+	Password   string
+	ProfileUrl string
+	Username   string
+	FullName   string
+}
 type User struct {
 	ID         uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 	Email      string    `gorm:"not null"`

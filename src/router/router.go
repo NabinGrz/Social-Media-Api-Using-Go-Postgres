@@ -33,6 +33,7 @@ func Router(db *gorm.DB) *gin.Engine {
 		// 	authorized.DELETE("/post/:id", postController.DeletePost)
 		// 	authorized.PUT("/post/:id", postController.UpdatePost)
 		authorized.POST("/post/like/:id", func(ctx *gin.Context) { postController.LikePost(ctx, db) })
+		authorized.POST("/post/share/:id", func(ctx *gin.Context) { postController.SharePost(ctx, db) })
 		// 	authorized.POST("/post/comment/:id", postController.CommentPost)
 		// 	authorized.POST("/post/share/:id", postController.SharePost)
 
