@@ -26,7 +26,7 @@ func DBConnection() {
 	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=%s password=%s",
 		host, port, user, dbName, sslmode, password)
 	DB, err = gorm.Open("postgres", dsn)
-
+	DB.LogMode(true)
 	if err != nil {
 		fmt.Println(err)
 		panic("Failed to connect database")
@@ -38,6 +38,7 @@ func DBConnection() {
 	DB.AutoMigrate(&userModel.User{})
 	DB.AutoMigrate(&userPostModel.MediaDetail{})
 	DB.AutoMigrate(&userPostModel.CommentDetail{})
-	DB.AutoMigrate(&userPostModel.SocialMediaPost{})
+	DB.AutoMigrate(&userPostModel.Post{})
+	DB.AutoMigrate(&userPostModel.Like{})
 
 }

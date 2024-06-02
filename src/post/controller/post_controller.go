@@ -3,64 +3,56 @@ package postController
 import (
 	"net/http"
 
+	userModel "github.com/NabinGrz/SocialMedia/src/authentication/models"
 	userPostModel "github.com/NabinGrz/SocialMedia/src/post/models"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 )
 
+func GetAllPost(c *gin.Context, db *gorm.DB) {
+	// id := c.Param("id")
+	var posts []userPostModel.Post
+
+	if err := db.Preload("User").Preload("Likes").Preload("Likes.User").Find(&posts).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, posts)
+
+}
+
 // func GetPostDetails(c *gin.Context, db *gorm.DB) {
-
-// 	// cursor, err := dbConnection.PostCollection.Aggregate(context.Background(), getAllPostPipeline())
-// 	// if err != nil {
-// 	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+// 	// // id := c.Param("id")
+// 	// var post userPostModel.Post
+// 	// if err := db.Model(&userModel.User{}).Preload("Likes").Find(&post).Error; err != nil {
+// 	// 	c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 // 	// 	return
 // 	// }
-// 	// defer cursor.Close(context.Background())
-// 	// var allPost []userPostModel.SocialMediaPost
-// 	// for cursor.Next(c) {
-// 	// 	var post postModel.SocialMediaPost
-
-// 	// 	if err := cursor.Decode(&post); err != nil {
-// 	// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 	// 		return
-// 	// 	}
-// 	// 	allPost = append(allPost, post)
-// 	// }
-
-// 	// if err := cursor.Err(); err != nil {
-// 	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 	// 	return
-// 	// }
-
-// 	// c.JSON(http.StatusOK, allPost)
-// 	id, _ := strconv.Atoi(c.Param("id"))
-
-// 	var post userPostModel.SocialMediaPost
-// 	// p, _ := uuid.Parse("7b427d94-5ee0-44e8-9b1d-e189682823be")
-// 	//.Preload("MediaDetails").Preload("CommentDetails")
-// 	if err := db.Preload("User").First(&post, "id = ?", id).Error; err != nil {
+// 	id := c.Param("id")
+// 	var post userPostModel.Post
+// 	if err := db.Preload("User").Preload("Likes").Find(&post, id).Error; err != nil {
 // 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 // 		return
 // 	}
 // 	c.JSON(http.StatusOK, post)
-
 // }
 
 func GetPostDetails(c *gin.Context, db *gorm.DB) {
-	id := c.Param("id")
-	var post userPostModel.SocialMediaPost
-	if err := db.Preload("User").First(&post, "id = ?", id).Error; err != nil {
+	// id := c.Param("id")
+	var post userPostModel.Post
+	if err := db.Model(&userModel.User{}).Preload("Likes").Find(&post).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
+
 	c.JSON(http.StatusOK, post)
 }
 
 func CreatePost(c *gin.Context, db *gorm.DB) {
 
-	// id, _ := strconv.Atoi(c.Param("id"))
-	var post userPostModel.SocialMediaPost
+	var post userPostModel.Post
 	userID := c.GetString("userid")
 	if err := c.ShouldBindJSON(&post); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -73,6 +65,56 @@ func CreatePost(c *gin.Context, db *gorm.DB) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Post created successfully", "post": post})
+}
+
+func userLikedPost(userID, postID uuid.UUID, db *gorm.DB) (bool, error) {
+	var count int64
+	if err := db.Model(&userPostModel.Like{}).
+		Where("user_id = ? AND post_id = ?", userID, postID).
+		Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+func dislikePost(userID, postID uuid.UUID, db *gorm.DB) error {
+	if err := db.Where("user_id = ? AND post_id = ?", userID, postID).
+		Delete(&userPostModel.Like{}).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func LikePost(c *gin.Context, db *gorm.DB) {
+	id := c.Param("id")
+	userIDString := c.GetString("userid")
+	userID, _ := uuid.Parse(userIDString)
+	var post userPostModel.Post
+	if err := db.Where("id = ?", id).First(&post).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Check if the user has already liked the post
+	isLiked, _ := userLikedPost(userID, post.ID, db)
+	if isLiked {
+		dislikePost(userID, post.ID, db)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Post has been disliked"})
+		return
+	}
+
+	// Constructing the like object
+	like := userPostModel.Like{
+		PostID: post.ID,
+		UserID: userID,
+	}
+	post.Likes = append(post.Likes, like)
+
+	// Save the updated post back to the database
+	if err := db.Save(&post).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Post has been liked"})
 }
 
 // func UpdatePost(c *gin.Context) {
@@ -147,28 +189,6 @@ func CreatePost(c *gin.Context, db *gorm.DB) {
 // 	c.JSON(http.StatusOK, gin.H{"message": "Post deleted successfully"})
 // }
 
-// func LikePost(c *gin.Context) {
-// 	userID, _ := primitive.ObjectIDFromHex(c.GetString("userid"))
-// 	var foundPost postModel.SocialMediaPost
-
-// 	id := c.Param("id")
-
-// 	objID, _ := primitive.ObjectIDFromHex(id)
-// 	filter := bson.M{"_id": objID}
-
-// 	result := dbConnection.PostCollection.FindOne(context.Background(), filter)
-
-// 	if result.Err() != nil {
-// 		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
-// 		return
-// 	}
-// 	result.Decode(&foundPost)
-// 	update := bson.M{"$addToSet": bson.M{"likeby": userID}}
-// 	updateResult, _ := dbConnection.PostCollection.UpdateMany(context.Background(), filter, update)
-// 	fmt.Println(updateResult)
-
-// 	c.JSON(http.StatusOK, gin.H{"message": "Post has been liked successfully"})
-// }
 // func SharePost(c *gin.Context) {
 // 	userID, _ := primitive.ObjectIDFromHex(c.GetString("userid"))
 // 	var foundPost postModel.SocialMediaPost

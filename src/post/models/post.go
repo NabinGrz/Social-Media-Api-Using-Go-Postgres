@@ -6,17 +6,25 @@ import (
 	"github.com/jinzhu/gorm"
 )
 
-// SocialMediaPost represents a social media post.
-// SocialMediaPost represents a social media post.
-type SocialMediaPost struct {
+// Post represents a social media post.
+// Post represents a social media post.
+type Post struct {
 	ID      uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 	Caption string    `gorm:"not null"`
 	UserID  uuid.UUID
 	User    userModel.User `gorm:"foreignKey:UserID"`
 	// MediaDetail []MediaDetail    `gorm:"foreignKey:MediaDetailID"`
-	// LikeBy      []userModel.User `gorm:"many2many:post_likes;"`
-	// Shares      []userModel.User `gorm:"many2many:post_shares;"`
+	Likes []Like `json:"likes"`
+	// Shares      []userModel.User `gorm:"foreignKey:UserID"`
 	// Comments    []CommentDetail  `gorm:"foreignKey:CommentID"`
+}
+
+type Like struct {
+	ID     uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid()" json:"id"`
+	PostID uuid.UUID      `gorm:"type:uuid" json:"post_id"`
+	Post   Post           `gorm:"foreignKey:PostID;references:ID" json:"-"`
+	UserID uuid.UUID      `gorm:"type:uuid" json:"-"`
+	User   userModel.User `gorm:"foreignKey:UserID;references:ID" json:"user"`
 }
 
 type CommentDetail struct {

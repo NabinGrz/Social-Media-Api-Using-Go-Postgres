@@ -27,12 +27,12 @@ func Router(db *gorm.DB) *gin.Engine {
 		// 	authorized.PUT("/updateProfileDetail/:id", profileController.UpdateDetails)
 
 		// 	//!! POST
-		// 	authorized.GET("/posts", postController.GetAllPost)
+		authorized.GET("/posts", func(ctx *gin.Context) { postController.GetAllPost(ctx, db) })
 		authorized.POST("/post", func(ctx *gin.Context) { postController.CreatePost(ctx, db) })
 		authorized.GET("/post/:id", func(ctx *gin.Context) { postController.GetPostDetails(ctx, db) })
 		// 	authorized.DELETE("/post/:id", postController.DeletePost)
 		// 	authorized.PUT("/post/:id", postController.UpdatePost)
-		// 	authorized.POST("/post/like/:id", postController.LikePost)
+		authorized.POST("/post/like/:id", func(ctx *gin.Context) { postController.LikePost(ctx, db) })
 		// 	authorized.POST("/post/comment/:id", postController.CommentPost)
 		// 	authorized.POST("/post/share/:id", postController.SharePost)
 
