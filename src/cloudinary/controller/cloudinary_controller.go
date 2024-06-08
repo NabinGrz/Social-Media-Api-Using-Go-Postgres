@@ -20,14 +20,14 @@ func UploadFile(c *gin.Context) (string, error) {
 	err = c.SaveUploadedFile(file, "assets/uploads/"+file.Filename)
 
 	if err != nil {
-		return "", errors.New("Failed to save file")
+		return "", errors.New("failed to save file")
 	}
 
 	//!! Using UploadToCloudinary Function
 	fileUrl, err := cloudinaryService.UploadCloudinary(file, "file")
 
 	if err != nil {
-		return "", errors.New("Failed to upload file")
+		return "", errors.New("failed to upload file")
 	}
 
 	return fileUrl, nil

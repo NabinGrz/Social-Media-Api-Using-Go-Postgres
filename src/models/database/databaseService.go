@@ -36,9 +36,10 @@ func DBConnection() {
 		fmt.Println("Successfully connected to database.....")
 	}
 	DB.AutoMigrate(&userModel.User{})
+	DB.AutoMigrate(&userPostModel.Post{})
 	DB.AutoMigrate(&userPostModel.MediaDetail{})
 	DB.AutoMigrate(&userPostModel.CommentDetail{})
-	DB.AutoMigrate(&userPostModel.Post{})
+
 	DB.AutoMigrate(&userPostModel.Like{})
 	DB.AutoMigrate(&userPostModel.Share{})
 

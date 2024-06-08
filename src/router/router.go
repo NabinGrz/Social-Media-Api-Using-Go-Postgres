@@ -3,6 +3,7 @@ package router
 import (
 	authController "github.com/NabinGrz/SocialMedia/src/authentication/controller"
 	authServices "github.com/NabinGrz/SocialMedia/src/authentication/services"
+	cloudinaryController "github.com/NabinGrz/SocialMedia/src/cloudinary/controller"
 	postController "github.com/NabinGrz/SocialMedia/src/post/controller"
 	"github.com/gin-gonic/gin"
 	"github.com/jinzhu/gorm"
@@ -28,8 +29,11 @@ func Router(db *gorm.DB) *gin.Engine {
 
 		// 	//!! POST
 		authorized.GET("/posts", func(ctx *gin.Context) { postController.GetAllPost(ctx, db) })
+		authorized.GET("/posts/own", func(ctx *gin.Context) { postController.GetAllOwnPost(ctx, db) })
 		authorized.POST("/post", func(ctx *gin.Context) { postController.CreatePost(ctx, db) })
 		authorized.GET("/post/:id", func(ctx *gin.Context) { postController.GetPostDetails(ctx, db) })
+		authorized.DELETE("/post/:id", func(ctx *gin.Context) { postController.DeletePost(ctx, db) })
+		authorized.PUT("/post/:id", func(ctx *gin.Context) { postController.UpdatePost(ctx, db) })
 		// 	authorized.DELETE("/post/:id", postController.DeletePost)
 		// 	authorized.PUT("/post/:id", postController.UpdatePost)
 		authorized.POST("/post/like/:id", func(ctx *gin.Context) { postController.LikePost(ctx, db) })
@@ -38,6 +42,7 @@ func Router(db *gorm.DB) *gin.Engine {
 		// 	authorized.POST("/post/share/:id", postController.SharePost)
 
 		// 	//!! FILE UPLOAD
+		authorized.POST("/upload-file", func(ctx *gin.Context) { cloudinaryController.UpdatePOSTImage(ctx) })
 		// 	authorized.POST("/uploadFile", cloudinaryController.UpdatePOSTImage)
 	}
 
