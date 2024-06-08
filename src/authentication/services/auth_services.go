@@ -29,8 +29,8 @@ func IsValid(user userModel.User) error {
 	}
 }
 
-// isValidEmail checks if the email provided is a valid email format
-func isValidEmail(email string) bool {
+// IsValidEmail checks if the email provided is a valid email format
+func IsValidEmail(email string) bool {
 	// Define the regex pattern for a valid email address
 	const emailRegexPattern = `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
 
@@ -84,7 +84,7 @@ func Register(user userModel.User, db *gorm.DB) (any, error) {
 	if emptyError != nil {
 		return nil, emptyError
 	}
-	isValid := isValidEmail(user.Email)
+	isValid := IsValidEmail(user.Email)
 	if !isValid {
 		return nil, errors.New("Invalid email address")
 	}
@@ -110,7 +110,7 @@ func Register(user userModel.User, db *gorm.DB) (any, error) {
 }
 
 func Login(user userModel.User, db *gorm.DB) (map[string]interface{}, error) {
-	isValid := isValidEmail(user.Email)
+	isValid := IsValidEmail(user.Email)
 
 	if !isValid {
 		return nil, errors.New("invalid email address")

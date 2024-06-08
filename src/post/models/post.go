@@ -3,20 +3,18 @@ package userPostModel
 import (
 	userModel "github.com/NabinGrz/SocialMedia/src/authentication/models"
 	"github.com/google/uuid"
-	"github.com/jinzhu/gorm"
 )
 
 // Post represents a social media post.
 type Post struct {
-	ID           uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	Caption      string    `gorm:"not null"`
-	UserID       uuid.UUID
-	User         userModel.User `gorm:"foreignKey:UserID"`
-	MediaDetails []MediaDetail  `gorm:"foreignKey:PostID;constraint:OnDelete:CASCADE;" json:"media_details"`
-	Likes        []Like
-	Shares       []Share
-	// Shares      []userModel.User `gorm:"foreignKey:UserID"`
-	// Comments    []CommentDetail  `gorm:"foreignKey:CommentID"`
+	ID           uuid.UUID       `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
+	Caption      string          `gorm:"not null"  json:"caption"`
+	UserID       uuid.UUID       `gorm:"type:uuid" json:"-"`
+	User         userModel.User  `gorm:"foreignKey:UserID" json:"user"`
+	MediaDetails []MediaDetail   `gorm:"foreignKey:PostID;constraint:OnDelete:CASCADE;" json:"media_details"`
+	Likes        []Like          `gorm:"foreignKey:PostID;constraint:OnDelete:CASCADE;" json:"likes"`
+	Shares       []Share         `gorm:"foreignKey:PostID;constraint:OnDelete:CASCADE;" json:"shares"`
+	Comments     []CommentDetail `gorm:"foreignKey:PostID;constraint:OnDelete:CASCADE;" json:"comments"`
 }
 type MediaDetail struct {
 	MediaDetailID uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()" json:"id"`
@@ -54,10 +52,12 @@ type Share struct {
 }
 
 type CommentDetail struct {
-	gorm.Model
-	CommentID    uuid.UUID `gorm:"primaryKey"`
-	Comment      string    `gorm:"not null"`
-	CommentUsers string    `gorm:"foreignKey:UserID;not null"`
+	ID      uuid.UUID      `gorm:"type:uuid;default:gen_random_uuid()" json:"id"`
+	PostID  uuid.UUID      `gorm:"type:uuid" json:"post_id"`
+	Comment string         `gorm:"not null" json:"comment"`
+	Post    Post           `gorm:"foreignKey:PostID;references:ID" json:"-"`
+	UserID  uuid.UUID      `gorm:"type:uuid" json:"-"`
+	User    userModel.User `gorm:"foreignKey:UserID;references:ID" json:"user"`
 }
 
 type PostByUser struct {

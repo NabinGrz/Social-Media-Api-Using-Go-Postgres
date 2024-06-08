@@ -15,7 +15,7 @@ import (
 func GetAllPost(c *gin.Context, db *gorm.DB) {
 	var posts []userPostModel.Post
 
-	if err := db.Preload("User").Preload("MediaDetails").Preload("Likes").Preload("Likes.User").Preload("Shares").Preload("Shares.User").Find(&posts).Error; err != nil {
+	if err := db.Preload("User").Preload("MediaDetails").Preload("Likes").Preload("Likes.User").Preload("Shares").Preload("Shares.User").Preload("Comments").Preload("Comments.User").Find(&posts).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -32,7 +32,7 @@ func GetAllOwnPost(c *gin.Context, db *gorm.DB) {
 
 	var posts []userPostModel.Post
 
-	if err := db.Preload("User").Preload("MediaDetails").Preload("Likes").Preload("Likes.User").Preload("Shares").Preload("Shares.User").Where("user_id = ?", userID).Find(&posts).Error; err != nil {
+	if err := db.Preload("User").Preload("MediaDetails").Preload("Likes").Preload("Likes.User").Preload("Shares").Preload("Shares.User").Preload("Comments").Preload("Comments.User").Where("user_id = ?", userID).Find(&posts).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -51,7 +51,7 @@ func GetPostDetails(c *gin.Context, db *gorm.DB) {
 		return
 	}
 	var post userPostModel.Post
-	if err := db.Preload("User").Preload("MediaDetails").Preload("Likes").Preload("Likes.User").Preload("Shares").Preload("Shares.User").Find(&post, "id = ?", id).Error; err != nil {
+	if err := db.Preload("User").Preload("MediaDetails").Preload("Likes").Preload("Likes.User").Preload("Shares").Preload("Shares.User").Preload("Comments").Preload("Comments.User").Find(&post, "id = ?", id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
@@ -234,5 +234,41 @@ func likeShare(c *gin.Context, db *gorm.DB, isLiking bool) {
 		c.JSON(http.StatusOK, gin.H{"message": "Post has been shared"})
 		return
 	}
+
+}
+func CommentOnPost(c *gin.Context, db *gorm.DB) {
+	id := c.Param("id")
+	if err := uuid.Validate(id); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Post Id must be valid UUID"})
+		return
+	}
+	userIDString := c.GetString("userid")
+	userID, _ := uuid.Parse(userIDString)
+	var post userPostModel.Post
+	if err := db.Where("id = ?", id).First(&post).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	var commented userPostModel.CommentDetail
+	if err := c.ShouldBindJSON(&commented); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		return
+	}
+
+	comment := userPostModel.CommentDetail{
+		PostID:  post.ID,
+		UserID:  userID,
+		Comment: commented.Comment,
+	}
+	post.Comments = append(post.Comments, comment)
+
+	// Save the updated post back to the database
+	if err := db.Save(&post).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Commented successfully"})
 
 }
